@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="no">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NGU Parkering</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <header class="app-header">
+        <div class="brand">
+            <span class="logo">P</span>
+            <div>
+                <h1>NGU Parkering</h1>
+                <p class="subtitle">Norges Geologiske Undersøkelse</p>
+            </div>
+        </div>
+        <div class="clock-box">
+            <span class="clock" id="clock">--:--:--</span>
+            <span class="clock-label">Lading: 07:00–11:30 og 11:30–16:00</span>
+        </div>
+    </header>
+
+    <main>
+        <details class="info" id="info">
+            <summary class="info-summary">
+                <span class="info-icon">i</span>
+                <span>Om ladestasjonene ved NGU</span>
+                <span class="info-chevron">⌄</span>
+            </summary>
+            <div class="info-body">
+                <p>Vi blir stadig flere med elbil ved NGU. NGU har <strong>seks ladestasjoner</strong>,
+                    slik at medarbeidere kan lade nok til å komme seg hjem fra jobb. Hensikten er ikke
+                    at hver enkelt skal lade mest mulig.</p>
+                <p>Ladestasjonene <strong>stenger kl. 16:00</strong> hver dag. Du kan lade bilen din i
+                    én av to økter:</p>
+                <ul class="info-slots">
+                    <li><strong>Formiddag</strong> · 07:00–11:30</li>
+                    <li><strong>Ettermiddag</strong> · 11:30–16:00</li>
+                </ul>
+                <p>Meld behovet ditt for lading i det egne Teamet, så alle får ladet det de trenger.
+                    Kjenner du andre med elbil som ikke er med? Videresend gjerne, så kan de legges
+                    inn i teamet.</p>
+            </div>
+        </details>
+
+        <section class="summary" id="summary">
+            <div class="summary-card free">
+                <span class="summary-num" id="countFree">0</span>
+                <span class="summary-label">Ledige</span>
+            </div>
+            <div class="summary-card taken">
+                <span class="summary-num" id="countTaken">0</span>
+                <span class="summary-label">Lader</span>
+            </div>
+            <div class="summary-card total">
+                <span class="summary-num">4</span>
+                <span class="summary-label">Totalt</span>
+            </div>
+        </section>
+
+        <section class="spots" id="spots">
+            <!-- Parkeringsplasser genereres av app.js -->
+        </section>
+    </main>
+
+    <!-- Mal for en parkeringsplass -->
+    <template id="spotTemplate">
+        <article class="spot" data-id="">
+            <div class="spot-head">
+                <span class="spot-number"></span>
+                <span class="status-badge"></span>
+            </div>
+
+            <div class="spot-body">
+                <div class="field">
+                    <label>Reg.nr</label>
+                    <input type="text" class="input-regnr" placeholder="AB 12345" autocomplete="off"
+                        maxlength="10">
+                </div>
+                <div class="field">
+                    <label>Navn</label>
+                    <input type="text" class="input-name" placeholder="Fullt navn" autocomplete="off"
+                        maxlength="40">
+                </div>
+
+                <div class="field slot-field" hidden>
+                    <label>Ladeøkt</label>
+                    <div class="slot-toggle">
+                        <button type="button" class="slot-btn" data-slot="am">07:00–11:30</button>
+                        <button type="button" class="slot-btn" data-slot="pm">11:30–16:00</button>
+                    </div>
+                </div>
+
+                <div class="countdown" hidden>
+                    <span class="countdown-label">Lading ferdig om</span>
+                    <span class="countdown-time">00:00:00</span>
+                </div>
+            </div>
+
+            <div class="spot-actions">
+                <button class="btn btn-toggle" type="button">Sett opptatt</button>
+                <button class="btn btn-clear" type="button" title="Tøm plassen">Frigjør</button>
+            </div>
+        </article>
+    </template>
+
+    <footer class="app-footer">
+        <span id="lastSaved">Endringer lagres automatisk på denne maskinen.</span>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

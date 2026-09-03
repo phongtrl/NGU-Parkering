@@ -3,8 +3,13 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>NGU Parkering</title>
+    <meta name="theme-color" content="#18181b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="NGU Parkering">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -19,7 +24,7 @@
             <span class="logo">P</span>
             <div>
                 <h1>NGU Parkering</h1>
-                <p class="subtitle">Norges Geologiske Undersøkelse</p>
+                <p class="subtitle">Norges Geologiske Undersøkelse – by Phong</p>
             </div>
         </div>
         <div class="clock-box">
@@ -48,8 +53,19 @@
                 <p>Meld behovet ditt for lading i det egne Teamet, så alle får ladet det de trenger.
                     Kjenner du andre med elbil som ikke er med? Videresend gjerne, så kan de legges
                     inn i teamet.</p>
+                <div class="notify-row">
+                    <button type="button" id="notifyBtn" class="notify-btn">🔕 Slå på varsler</button>
+                    <span class="notify-status" id="notifyStatus"></span>
+                </div>
             </div>
         </details>
+
+        <div class="group-switch" id="groupSwitch" role="tablist" aria-label="Velg ladere">
+            <button type="button" class="group-btn active" data-group="nye" role="tab"
+                aria-selected="true">Nye ladere</button>
+            <button type="button" class="group-btn" data-group="gamle" role="tab"
+                aria-selected="false">Gamle ladere</button>
+        </div>
 
         <section class="summary" id="summary">
             <div class="summary-card free">
@@ -61,7 +77,7 @@
                 <span class="summary-label">Lader</span>
             </div>
             <div class="summary-card total">
-                <span class="summary-num">4</span>
+                <span class="summary-num" id="countTotal">4</span>
                 <span class="summary-label">Totalt</span>
             </div>
         </section>
@@ -71,51 +87,100 @@
         </section>
     </main>
 
-    <!-- Mal for en parkeringsplass -->
+    <!-- Mal for en parkeringsplass (kompakt flis) -->
     <template id="spotTemplate">
-        <article class="spot" data-id="">
-            <div class="spot-head">
+        <button class="spot" type="button" data-id="">
+            <div class="spot-top">
                 <span class="spot-number"></span>
                 <span class="status-badge"></span>
             </div>
+            <div class="spot-details">
+                <span class="spot-car"></span>
+                <span class="spot-regnr" hidden></span>
+                <span class="spot-name"></span>
+                <span class="spot-since" hidden>
+                    <span class="since-full"></span>
+                    <span class="since-short"></span>
+                </span>
+            </div>
+            <div class="spot-timer" hidden>
+                <div class="spot-timer-head">
+                    <span class="spot-timer-label">Tid igjen</span>
+                    <span class="spot-slot"></span>
+                </div>
+                <span class="spot-timer-time">00:00:00</span>
+            </div>
+        </button>
+    </template>
 
-            <div class="spot-body">
+    <!-- Popup for å redigere en plass -->
+    <dialog class="modal" id="modal">
+        <div class="modal-card">
+            <header class="modal-head">
+                <div class="modal-head-text">
+                    <h2 class="modal-title" id="modalTitle">Plass</h2>
+                    <span class="status-badge modal-status" id="modalStatus">Ledig</span>
+                </div>
+                <button class="modal-close" id="modalClose" type="button" aria-label="Lukk">×</button>
+            </header>
+
+            <div class="modal-body">
                 <div class="field">
-                    <label>Reg.nr</label>
-                    <input type="text" class="input-regnr" placeholder="AB 12345" autocomplete="off"
-                        maxlength="10">
+                    <label>Bil</label>
+                    <input type="text" class="input-car" id="modalCar" placeholder="F.eks. hvit VW ID.4"
+                        autocomplete="off" maxlength="30">
+                </div>
+                <div class="field" id="modalRegnrField">
+                    <label>Regnr <span class="req">*</span></label>
+                    <input type="text" class="input-regnr" id="modalRegnr" placeholder="F.eks. EL 12345"
+                        autocomplete="off" maxlength="10" required>
+                    <span class="field-error" id="modalRegnrError" hidden>Regnr må fylles ut for å starte lading.</span>
                 </div>
                 <div class="field">
                     <label>Navn</label>
-                    <input type="text" class="input-name" placeholder="Fullt navn" autocomplete="off"
-                        maxlength="40">
+                    <input type="text" class="input-name" id="modalName" placeholder="Fullt navn"
+                        autocomplete="off" maxlength="40">
                 </div>
 
-                <div class="field slot-field" hidden>
+                <div class="field slot-field" id="modalSlotField" hidden>
                     <label>Ladeøkt</label>
-                    <div class="slot-toggle">
+                    <div class="slot-toggle" id="modalSlot">
                         <button type="button" class="slot-btn" data-slot="am">07:00–11:30</button>
                         <button type="button" class="slot-btn" data-slot="pm">11:30–16:00</button>
                     </div>
                 </div>
 
-                <div class="countdown" hidden>
-                    <span class="countdown-label">Lading ferdig om</span>
+                <div class="countdown" id="modalCountdown" hidden>
+                    <span class="countdown-label">Ladeøkt slutter om</span>
                     <span class="countdown-time">00:00:00</span>
                 </div>
+
+                <p class="modal-since" id="modalSince" hidden></p>
             </div>
 
-            <div class="spot-actions">
-                <button class="btn btn-toggle" type="button">Sett opptatt</button>
-                <button class="btn btn-clear" type="button" title="Tøm plassen">Frigjør</button>
+            <footer class="modal-actions">
+                <button class="btn btn-toggle" id="modalToggle" type="button">Start lading</button>
+            </footer>
+        </div>
+    </dialog>
+
+    <dialog class="confirm" id="confirmDialog">
+        <div class="confirm-card">
+            <h2 class="confirm-title" id="confirmTitle">NGU Parkering spør deg...</h2>
+            <p class="confirm-text" id="confirmText"></p>
+            <div class="confirm-actions">
+                <button class="btn btn-cancel" id="confirmCancel" type="button">Avbryt</button>
+                <button class="btn btn-ok" id="confirmOk" type="button">OK</button>
             </div>
-        </article>
-    </template>
+        </div>
+    </dialog>
 
     <footer class="app-footer">
         <span id="lastSaved">Endringer lagres automatisk på denne maskinen.</span>
+        <span class="credit">NGU Parkering av Phong</span>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="app.js"></script>
 </body>
 

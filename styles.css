@@ -500,16 +500,17 @@ main {
 }
 
 .spot-car {
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .spot-regnr {
-    font-size: 13px;
-    color: var(--muted);
+    font-size: 15px;
+    font-weight: 700;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -517,6 +518,7 @@ main {
 
 .spot-name {
     font-size: 13px;
+    font-weight: 400;
     color: var(--muted);
     white-space: nowrap;
     overflow: hidden;
@@ -621,6 +623,10 @@ main {
     color: var(--faint);
 }
 
+.input-regnr {
+    font-weight: 700;
+}
+
 .req {
     color: var(--taken);
 }
@@ -689,9 +695,22 @@ main {
     text-align: center;
 }
 
+.modal-hint {
+    font-size: 11px;
+    color: var(--faint);
+    line-height: 1.4;
+    text-align: center;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+    margin-top: 4px;
+}
+
 /* Knapper */
 .modal-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 10px;
 }
 
@@ -713,6 +732,27 @@ main {
 
 .btn-toggle:hover {
     background: #000;
+}
+
+.btn-clear {
+    flex: 0 0 auto;
+    background: var(--surface);
+    color: var(--text);
+    border-color: var(--line);
+}
+
+.btn-clear:hover {
+    border-color: var(--taken);
+    color: var(--taken);
+}
+
+.btn-save {
+    background: var(--free);
+    color: #fff;
+}
+
+.btn-save:hover {
+    filter: brightness(0.94);
 }
 
 .modal.taken .btn-toggle {
@@ -953,6 +993,18 @@ main {
     .info { margin-bottom: 10px; }
     .info-summary { padding: 12px 16px; }
 
+    /* Fast mobil-layout skjuler sidescroll – la infoteksten scrolle internt. */
+    .info[open] {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+    .info[open] .info-body {
+        max-height: 50vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
     .group-switch { margin-bottom: 10px; }
 
     .summary {
@@ -988,8 +1040,8 @@ main {
     .spot-number { font-size: 14px; }
     .status-badge { font-size: 11px; }
 
-    .spot-car { font-size: 13.5px; }
-    .spot-regnr { font-size: 12px; }
+    .spot-car { font-size: 12px; }
+    .spot-regnr { font-size: 13.5px; }
     .spot-name { font-size: 12px; }
 
     /* Mobil: vis full «Parkert siden HH:MM · MM:SS» og la den brytes så tallene vises */
@@ -1013,3 +1065,30 @@ main {
 
     .app-footer { display: none; }
 }
+
+/* Bekreftelses-popup (toast) */
+.toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(24px + env(safe-area-inset-bottom));
+    transform: translateX(-50%) translateY(20px);
+    max-width: min(92vw, 420px);
+    padding: 13px 18px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 10px 30px rgba(24, 24, 27, 0.25);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1000;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+

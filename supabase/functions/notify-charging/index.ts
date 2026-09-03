@@ -14,7 +14,7 @@ const TEAMS_WEBHOOK_URL = Deno.env.get("TEAMS_WEBHOOK_URL") ?? "";
 const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
 
 const SLOTS: Record<string, { label: string; endMin: number }> = {
-    am: { label: "07:00–11:30", endMin: 11 * 60 + 30 },
+    am: { label: "07:30–11:30", endMin: 11 * 60 + 30 },
     pm: { label: "11:30–16:00", endMin: 16 * 60 },
 };
 

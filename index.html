@@ -29,7 +29,7 @@
         </div>
         <div class="clock-box">
             <span class="clock" id="clock">--:--:--</span>
-            <span class="clock-label">Lading: 07:00–11:30 og 11:30–16:00</span>
+            <span class="clock-label">Lading: 07:30–11:30 og 11:30–16:00</span>
         </div>
     </header>
 
@@ -44,15 +44,17 @@
                 <p>Vi blir stadig flere med elbil ved NGU. NGU har <strong>seks ladestasjoner</strong>,
                     slik at medarbeidere kan lade nok til å komme seg hjem fra jobb. Hensikten er ikke
                     at hver enkelt skal lade mest mulig.</p>
-                <p>Ladestasjonene <strong>stenger kl. 16:00</strong> hver dag. Du kan lade bilen din i
-                    én av to økter:</p>
+                <p>Ladestasjonene <strong>slås på kl. 07:30</strong> og <strong>slås av kl. 16:00</strong>
+                    hver dag. Du kan lade bilen din i én av to økter:</p>
                 <ul class="info-slots">
-                    <li><strong>Formiddag</strong> · 07:00–11:30</li>
+                    <li><strong>Formiddag</strong> · 07:30–11:30</li>
                     <li><strong>Ettermiddag</strong> · 11:30–16:00</li>
                 </ul>
                 <p>Meld behovet ditt for lading i det egne Teamet, så alle får ladet det de trenger.
                     Kjenner du andre med elbil som ikke er med? Videresend gjerne, så kan de legges
                     inn i teamet.</p>
+                <p><strong>Merk:</strong> Appen fungerer kun når enheten din er koblet til
+                    <strong>Eduroam</strong>.</p>
                 <div class="notify-row">
                     <button type="button" id="notifyBtn" class="notify-btn">🔕 Slå på varsler</button>
                     <span class="notify-status" id="notifyStatus"></span>
@@ -95,8 +97,8 @@
                 <span class="status-badge"></span>
             </div>
             <div class="spot-details">
-                <span class="spot-car"></span>
                 <span class="spot-regnr" hidden></span>
+                <span class="spot-car"></span>
                 <span class="spot-name"></span>
                 <span class="spot-since" hidden>
                     <span class="since-full"></span>
@@ -125,27 +127,30 @@
             </header>
 
             <div class="modal-body">
-                <div class="field">
-                    <label>Bil</label>
-                    <input type="text" class="input-car" id="modalCar" placeholder="F.eks. hvit VW ID.4"
-                        autocomplete="off" maxlength="30">
-                </div>
                 <div class="field" id="modalRegnrField">
                     <label>Regnr <span class="req">*</span></label>
                     <input type="text" class="input-regnr" id="modalRegnr" placeholder="F.eks. EL 12345"
-                        autocomplete="off" maxlength="10" required>
+                        autocomplete="off" maxlength="10" required list="regnrHistory">
+                    <datalist id="regnrHistory"></datalist>
                     <span class="field-error" id="modalRegnrError" hidden>Regnr må fylles ut for å starte lading.</span>
+                </div>
+                <div class="field">
+                    <label>Bil</label>
+                    <input type="text" class="input-car" id="modalCar" placeholder="F.eks. hvit VW ID.4"
+                        autocomplete="off" maxlength="30" list="carHistory">
+                    <datalist id="carHistory"></datalist>
                 </div>
                 <div class="field">
                     <label>Navn</label>
                     <input type="text" class="input-name" id="modalName" placeholder="Fullt navn"
-                        autocomplete="off" maxlength="40">
+                        autocomplete="off" maxlength="40" list="nameHistory">
+                    <datalist id="nameHistory"></datalist>
                 </div>
 
                 <div class="field slot-field" id="modalSlotField" hidden>
                     <label>Ladeøkt</label>
                     <div class="slot-toggle" id="modalSlot">
-                        <button type="button" class="slot-btn" data-slot="am">07:00–11:30</button>
+                        <button type="button" class="slot-btn" data-slot="am">07:30–11:30</button>
                         <button type="button" class="slot-btn" data-slot="pm">11:30–16:00</button>
                     </div>
                 </div>
@@ -156,9 +161,13 @@
                 </div>
 
                 <p class="modal-since" id="modalSince" hidden></p>
+                <p class="modal-hint" id="modalSaveHint" hidden>Har du byttet Navn eller Bil? Trykk
+                    «Lagre endringer» for å oppdatere.</p>
             </div>
 
             <footer class="modal-actions">
+                <button class="btn btn-clear" id="modalClear" type="button">Tøm</button>
+                <button class="btn btn-save" id="modalSave" type="button" hidden>Lagre endringer</button>
                 <button class="btn btn-toggle" id="modalToggle" type="button">Start lading</button>
             </footer>
         </div>

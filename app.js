@@ -60,7 +60,7 @@
 
     // Ladeøkter. Bilen kan lade i én av to økter per dag.
     const SLOTS = {
-        am: { label: "07:00–11:30", end: [11, 30] },
+        am: { label: "07:30–11:30", end: [11, 30] },
         pm: { label: "11:30–16:00", end: [16, 0] },
     };
 
@@ -97,6 +97,140 @@
 
     function saveLocal() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(spots));
+    }
+
+    // ---------- Historikk (gjenbruk av tidligere tekster) ----------
+    // Lagrer tidligere brukte verdier for Bil, Regnr og Navn lokalt, slik at de
+    // kan foreslås (datalist) og gjenbrukes ved ny registrering.
+    const HISTORY_KEY = "ngu-parkering-history";
+    const HISTORY_LIMIT = 25;
+    const HISTORY_FIELDS = ["car", "regnr", "name"];
+
+    function loadHistory() {
+        const base = { car: [], regnr: [], name: [], records: [] };
+        try {
+            const raw = localStorage.getItem(HISTORY_KEY);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                for (const field of HISTORY_FIELDS) {
+                    if (Array.isArray(parsed[field])) {
+                        base[field] = parsed[field].filter((v) => typeof v === "string");
+                    }
+                }
+                if (Array.isArray(parsed.records)) {
+                    base.records = parsed.records.filter(
+                        (r) => r && typeof r.regnr === "string"
+                    );
+                }
+            }
+        } catch {
+            /* ignorer korrupt data */
+        }
+        return base;
+    }
+
+    const history = loadHistory();
+
+    function saveHistory() {
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    }
+
+    // Legger en verdi fremst i historikken (nyeste først, uten duplikater).
+    function rememberValue(field, value) {
+        const text = String(value || "").trim();
+        if (!text) return false;
+        const list = history[field];
+        const existing = list.findIndex((v) => v.toLowerCase() === text.toLowerCase());
+        if (existing !== -1) list.splice(existing, 1);
+        list.unshift(text);
+        if (list.length > HISTORY_LIMIT) list.length = HISTORY_LIMIT;
+        return true;
+    }
+
+    // Kobler Bil + Navn til et Regnr, slik at valg av Regnr kan autofylle resten.
+    function rememberRecord(spot) {
+        const regnr = String(spot.regnr || "").trim();
+        if (!regnr) return false;
+        const car = String(spot.car || "").trim();
+        const name = String(spot.name || "").trim();
+        const records = history.records;
+        const at = records.findIndex(
+            (r) => r.regnr.toLowerCase() === regnr.toLowerCase()
+        );
+        const prev = at !== -1 ? records[at] : null;
+        // Behold tidligere Bil/Navn dersom denne registreringen mangler dem.
+        const merged = {
+            regnr,
+            car: car || (prev ? prev.car : ""),
+            name: name || (prev ? prev.name : ""),
+        };
+        if (
+            prev &&
+            prev.regnr === merged.regnr &&
+            prev.car === merged.car &&
+            prev.name === merged.name &&
+            at === 0
+        ) {
+            return false;
+        }
+        if (at !== -1) records.splice(at, 1);
+        records.unshift(merged);
+        if (records.length > HISTORY_LIMIT) records.length = HISTORY_LIMIT;
+        return true;
+    }
+
+    // Finner en tidligere registrering ut fra Regnr.
+    function lookupByRegnr(regnr) {
+        const text = String(regnr || "").trim().toLowerCase();
+        if (!text) return null;
+        return (
+            history.records.find((r) => r.regnr.toLowerCase() === text) || null
+        );
+    }
+
+    // Husker alle tekstfeltene for en plass og oppdaterer forslagslistene.
+    function rememberSpot(spot) {
+        let changed = false;
+        for (const field of HISTORY_FIELDS) {
+            if (rememberValue(field, spot[field])) changed = true;
+        }
+        if (rememberRecord(spot)) changed = true;
+        if (changed) {
+            saveHistory();
+            renderHistoryOptions();
+        }
+    }
+
+    // Fyller historikken med verdier som allerede finnes (lokalt eller fra andre
+    // enheter), slik at tidligere brukte tekster kan gjenbrukes med én gang.
+    function seedHistoryFrom(list) {
+        let changed = false;
+        for (const spot of list || []) {
+            if (!spot) continue;
+            for (const field of HISTORY_FIELDS) {
+                if (rememberValue(field, spot[field])) changed = true;
+            }
+            if (rememberRecord(spot)) changed = true;
+        }
+        if (changed) {
+            saveHistory();
+            renderHistoryOptions();
+        }
+    }
+
+    // Fyller <datalist>-elementene med lagrede verdier.
+    function renderHistoryOptions() {
+        const map = { car: "carHistory", regnr: "regnrHistory", name: "nameHistory" };
+        for (const field of HISTORY_FIELDS) {
+            const list = document.getElementById(map[field]);
+            if (!list) continue;
+            list.innerHTML = "";
+            for (const value of history[field]) {
+                const opt = document.createElement("option");
+                opt.value = value;
+                list.appendChild(opt);
+            }
+        }
     }
 
     function debounce(fn, ms) {
@@ -177,6 +311,7 @@
         const node = nodeFor(row.id);
         if (node) renderSpot(node, spots.find((s) => s.id === row.id));
         renderSummary();
+        seedHistoryFrom([spots.find((s) => s.id === row.id)]);
 
         // Oppdater popup hvis den er åpen for samme plass – uten å forstyrre skriving.
         if (modal.open && currentId === row.id) {
@@ -246,6 +381,7 @@
             for (const spot of spots) await upsertSpot(spot);
         }
         saveLocal();
+        seedHistoryFrom(spots);
         renderAll();
 
         // Lytt på endringer fra alle enheter (sanntid via WebSocket der det er tillatt).
@@ -435,6 +571,9 @@
         countdown: document.getElementById("modalCountdown"),
         since: document.getElementById("modalSince"),
         toggle: document.getElementById("modalToggle"),
+        clear: document.getElementById("modalClear"),
+        save: document.getElementById("modalSave"),
+        saveHint: document.getElementById("modalSaveHint"),
         close: document.getElementById("modalClose"),
     };
 
@@ -495,6 +634,8 @@
         el.status.classList.toggle("taken", spot.taken);
         modal.classList.toggle("taken", spot.taken);
         el.toggle.textContent = spot.taken ? "Avslutt lading" : "Start lading";
+        el.save.hidden = !spot.taken;
+        if (el.saveHint) el.saveHint.hidden = !spot.taken;
 
         el.slotField.hidden = !spot.taken;
         el.slot.querySelectorAll(".slot-btn").forEach((btn) => {
@@ -552,10 +693,25 @@
         el.regnrError.hidden = !show;
     }
 
+    // Fyller Bil og Navn fra en tidligere registrering når Regnr gjenkjennes.
+    function autofillFromRegnr(spot) {
+        const match = lookupByRegnr(spot.regnr);
+        if (!match) return;
+        if (match.car && !el.car.value.trim()) {
+            spot.car = match.car;
+            el.car.value = match.car;
+        }
+        if (match.name && !el.name.value.trim()) {
+            spot.name = match.name;
+            el.name.value = match.name;
+        }
+    }
+
     el.regnr.addEventListener("input", () => {
         const spot = currentSpot();
         spot.regnr = el.regnr.value;
         if (el.regnr.value.trim()) setRegnrError(false);
+        autofillFromRegnr(spot);
         saveLocal();
         syncSpot();
         upsertDebounced(spot);
@@ -578,6 +734,22 @@
             syncSpot();
         });
     });
+
+    // Kort bekreftelses-popup nederst på skjermen.
+    let toastTimer;
+    function showToast(message) {
+        let toast = document.getElementById("toast");
+        if (!toast) {
+            toast = document.createElement("div");
+            toast.id = "toast";
+            toast.className = "toast";
+            document.body.appendChild(toast);
+        }
+        toast.textContent = message;
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 3500);
+    }
 
     el.toggle.addEventListener("click", async () => {
         const spot = currentSpot();
@@ -604,13 +776,48 @@
         spot.taken = true;
         spot.slot = defaultSlot();
         spot.since = new Date().toISOString();
+        rememberSpot(spot);
         persist(spot);
         renderModal();
         tickModal();
         syncSpot();
+        closeModal();
+        showToast(`Lading har startet for ${spot.regnr}`);
     });
 
     el.close.addEventListener("click", closeModal);
+    // Lagrer endringer på en aktiv registrering (Regnr, Bil, Navn) og lukker.
+    el.save.addEventListener("click", () => {
+        const spot = currentSpot();
+        if (!spot) return;
+        if (!el.regnr.value.trim()) {
+            setRegnrError(true);
+            el.regnr.focus();
+            return;
+        }
+        spot.car = el.car.value.trim();
+        spot.regnr = el.regnr.value.trim();
+        spot.name = el.name.value.trim();
+        rememberSpot(spot);
+        persist(spot);
+        syncSpot();
+        closeModal();
+    });
+    // Tømmer tekstfeltene (Regnr, Bil, Navn) uten å endre status.
+    el.clear.addEventListener("click", () => {
+        const spot = currentSpot();
+        if (!spot) return;
+        spot.car = "";
+        spot.regnr = "";
+        spot.name = "";
+        el.car.value = "";
+        el.regnr.value = "";
+        el.name.value = "";
+        setRegnrError(false);
+        el.regnr.focus();
+        persist(spot);
+        syncSpot();
+    });
     // Lukk ved klikk på bakgrunnen.
     modal.addEventListener("click", (e) => {
         if (e.target === modal) closeModal();
@@ -916,6 +1123,8 @@
     // ---------- Oppstart ----------
     buildSpots();
     setupGroupSwitch();
+    seedHistoryFrom(spots);
+    renderHistoryOptions();
     renderSummary();
     tick();
     setInterval(tick, 1000);

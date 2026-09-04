@@ -393,6 +393,29 @@ main {
     border: 1px solid var(--line);
     border-radius: 999px;
     box-shadow: var(--shadow);
+    position: relative;
+}
+
+/* Glidende «dråpe» bak den aktive knappen. */
+.group-switch::before {
+    content: "";
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 0;
+    width: var(--pill-w, 0);
+    transform: translateX(var(--pill-x, 0));
+    background: var(--accent);
+    border-radius: 999px;
+    z-index: 0;
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+        width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Ingen animasjon før første plassering er målt. */
+.group-switch:not([data-ready])::before {
+    transition: none;
+    opacity: 0;
 }
 
 .group-btn {
@@ -407,7 +430,9 @@ main {
     padding: 8px 18px;
     border-radius: 999px;
     cursor: pointer;
-    transition: background 0.2s ease, color 0.2s ease;
+    position: relative;
+    z-index: 1;
+    transition: color 0.25s ease;
 }
 
 .group-btn:hover {
@@ -415,7 +440,6 @@ main {
 }
 
 .group-btn.active {
-    background: var(--accent);
     color: #fff;
 }
 
@@ -423,6 +447,7 @@ main {
 .spots {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: 1fr;
     gap: 14px;
 }
 
@@ -552,11 +577,16 @@ main {
 
 .spot-timer-head {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1px;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 2px 8px;
     min-width: 0;
 }
+
+/* På web: «Tid igjen» til venstre, tidsperioden øverst til høyre. */
+.spot-timer-head .spot-timer-label { order: 1; }
+.spot-timer-head .spot-slot { order: 2; }
 
 .spot-timer-label {
     font-size: 11px;
@@ -948,6 +978,8 @@ main {
     main {
         flex: 1;
         min-height: 0;
+        width: 100%;
+        align-self: stretch;
         display: flex;
         flex-direction: column;
     }
@@ -1016,16 +1048,19 @@ main {
     .spots {
         flex: 1;
         min-height: 0;
-        /* minmax(0, 1fr) hindrer at en full flis vokser forbi sin andel */
+        width: 100%;
+        overflow: hidden;
+        /* Alltid full bredde; minmax(0,1fr) hindrer at en flis sprenger sporet. */
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        grid-template-rows: repeat(2, minmax(0, 1fr));
+        /* Flisene deler tilgjengelig høyde likt og krymper heller enn å scrolle –
+           slik at alle plassene er synlige og valgbare også når infoboksen er åpen. */
+        grid-auto-rows: minmax(0, 1fr);
         gap: 10px;
     }
 
-    /* Gamle ladere: to plasser stables i full bredde */
+    /* Gamle ladere: to plasser i full bredde */
     .spots[data-count="2"] {
         grid-template-columns: 1fr;
-        grid-template-rows: repeat(2, minmax(0, 1fr));
     }
 
     .spot {
@@ -1058,6 +1093,16 @@ main {
         padding: 6px 9px;
         border-radius: 9px;
     }
+
+    /* Mobil: tidsperiode \u00f8verst, s\u00e5 \u00abTid igjen\u00bb, s\u00e5 tiden nederst. */
+    .spot-timer-head {
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+        gap: 1px;
+    }
+    .spot-timer-head .spot-slot { order: 0; }
+    .spot-timer-head .spot-timer-label { order: 1; }
 
     .spot-slot { font-size: 11px; }
     .spot-timer-time { font-size: 13.5px; }

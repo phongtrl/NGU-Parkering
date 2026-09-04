@@ -494,27 +494,146 @@
     function updateGroupSwitch() {
         const sw = document.getElementById("groupSwitch");
         if (!sw) return;
+        let activeBtn = null;
         sw.querySelectorAll(".group-btn").forEach((btn) => {
             const on = btn.dataset.group === currentGroup;
             btn.classList.toggle("active", on);
             btn.setAttribute("aria-selected", on ? "true" : "false");
+            if (on) activeBtn = btn;
         });
+        // Flytt «dråpen» til den aktive knappen.
+        if (activeBtn) {
+            sw.style.setProperty("--pill-x", `${activeBtn.offsetLeft}px`);
+            sw.style.setProperty("--pill-w", `${activeBtn.offsetWidth}px`);
+            // Slå på animasjon etter første måling (unngår hopp ved oppstart).
+            requestAnimationFrame(() => sw.setAttribute("data-ready", ""));
+        }
     }
 
     function setupGroupSwitch() {
         const sw = document.getElementById("groupSwitch");
         if (!sw) return;
         sw.querySelectorAll(".group-btn").forEach((btn) => {
-            btn.addEventListener("click", () => {
-                if (currentGroup === btn.dataset.group) return;
-                currentGroup = btn.dataset.group;
-                localStorage.setItem(GROUP_KEY, currentGroup);
-                updateGroupSwitch();
-                buildSpots();
-                renderSummary();
-            });
+            btn.addEventListener("click", () => setGroup(btn.dataset.group));
         });
         updateGroupSwitch();
+        // Hold «dråpen» på plass når bredden endres.
+        window.addEventListener("resize", updateGroupSwitch);
+    }
+
+    // ---------- Info-trekkspill med åpne/lukke-animasjon ----------
+    // Kollapser høyden i JS (Web Animations API) slik at boksen faktisk
+    // krymper – uten en tom boks som henger igjen. Virker likt på iOS/Android.
+    function setupInfoAccordion() {
+        const info = document.getElementById("info");
+        const summary = info?.querySelector(".info-summary");
+        const body = info?.querySelector(".info-body");
+        if (!info || !summary || !body) return;
+
+        const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        let anim = null;
+
+        const clearInline = () => {
+            body.style.removeProperty("max-height");
+            body.style.removeProperty("overflow");
+            body.style.removeProperty("padding-top");
+            body.style.removeProperty("padding-bottom");
+        };
+
+        summary.addEventListener("click", (e) => {
+            e.preventDefault();
+            if (anim) {
+                anim.cancel();
+                anim = null;
+            }
+
+            if (!info.open) {
+                info.open = true;
+                if (reduce) return;
+                const full = body.scrollHeight;
+                body.style.overflow = "hidden";
+                anim = body.animate(
+                    [
+                        { maxHeight: "0px", opacity: 0, paddingTop: "0px", paddingBottom: "0px" },
+                        { maxHeight: `${full}px`, opacity: 1 },
+                    ],
+                    { duration: 300, easing: "cubic-bezier(0.34, 1.3, 0.64, 1)" }
+                );
+                anim.onfinish = anim.oncancel = () => {
+                    clearInline();
+                    anim = null;
+                };
+            } else {
+                if (reduce) {
+                    info.open = false;
+                    return;
+                }
+                const full = body.scrollHeight;
+                body.style.overflow = "hidden";
+                anim = body.animate(
+                    [
+                        { maxHeight: `${full}px`, opacity: 1 },
+                        { maxHeight: "0px", opacity: 0, paddingTop: "0px", paddingBottom: "0px" },
+                    ],
+                    { duration: 170, easing: "ease-in" }
+                );
+                anim.onfinish = anim.oncancel = () => {
+                    clearInline();
+                    anim = null;
+                    info.open = false;
+                };
+            }
+        });
+    }
+
+    // Bytter aktiv ladergruppe og oppdaterer visningen.
+    function setGroup(key) {
+        if (!key || currentGroup === key || !GROUPS.some((g) => g.key === key)) return;
+        currentGroup = key;
+        localStorage.setItem(GROUP_KEY, currentGroup);
+        updateGroupSwitch();
+        buildSpots();
+        renderSummary();
+    }
+
+    // Mobil: sveip venstre/høyre for å bytte mellom ladergruppene.
+    function setupSwipeGroups() {
+        let startX = 0;
+        let startY = 0;
+        let tracking = false;
+        const SWIPE_MIN = 60; // px horisontalt før et bytte utløses
+
+        spotsEl.addEventListener(
+            "touchstart",
+            (e) => {
+                if (modal.open || e.touches.length !== 1) {
+                    tracking = false;
+                    return;
+                }
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                tracking = true;
+            },
+            { passive: true }
+        );
+
+        spotsEl.addEventListener(
+            "touchend",
+            (e) => {
+                if (!tracking) return;
+                tracking = false;
+                const touch = e.changedTouches[0];
+                const dx = touch.clientX - startX;
+                const dy = touch.clientY - startY;
+                // Kun tydelige horisontale sveip skal bytte gruppe.
+                if (Math.abs(dx) < SWIPE_MIN || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+                const idx = GROUPS.findIndex((g) => g.key === currentGroup);
+                const next = dx < 0 ? idx + 1 : idx - 1;
+                if (next < 0 || next >= GROUPS.length) return;
+                setGroup(GROUPS[next].key);
+            },
+            { passive: true }
+        );
     }
 
     // Oppdaterer en flis ut fra plassens tilstand.
@@ -1123,6 +1242,8 @@
     // ---------- Oppstart ----------
     buildSpots();
     setupGroupSwitch();
+    setupSwipeGroups();
+    setupInfoAccordion();
     seedHistoryFrom(spots);
     renderHistoryOptions();
     renderSummary();

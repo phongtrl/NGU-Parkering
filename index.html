@@ -184,8 +184,19 @@
         </div>
     </dialog>
 
+    <dialog class="changelog" id="changelogDialog">
+        <div class="changelog-card">
+            <div class="changelog-head">
+                <h2 class="changelog-title">Versjonshistorikk</h2>
+                <button class="modal-close" id="changelogClose" type="button" aria-label="Lukk">×</button>
+            </div>
+            <ol class="changelog-list" id="changelogList"></ol>
+        </div>
+    </dialog>
+
     <footer class="app-footer">
         <span id="lastSaved">Endringer lagres automatisk på denne maskinen.</span>
+        <button class="version" id="appVersion" type="button" title="Vis versjonshistorikk">⚡ v1.4.0 · «Dråpe»</button>
         <span class="credit">NGU Parkering av Phong</span>
     </footer>
 

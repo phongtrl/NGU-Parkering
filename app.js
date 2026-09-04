@@ -586,6 +586,86 @@
         });
     }
 
+    // ---------- Versjonshistorikk ----------
+    const CHANGELOG = [
+        {
+            v: "1.4.0",
+            name: "Dråpe",
+            items: [
+                "«Dråpe»-animasjon når du bytter mellom Nye og Gamle ladere.",
+                "Myk åpne-/lukkeanimasjon for «Om ladestasjonene».",
+                "Flisene holder full bredde og krymper for å passe – uten scroll.",
+                "Klikkbar versjonspille med full historikk (denne boksen).",
+            ],
+        },
+        {
+            v: "1.3.0",
+            name: "Mobil",
+            items: [
+                "Sveip mellom ladergrupper på mobil.",
+                "Fast mobil-layout der infoteksten scroller internt.",
+                "Toast-varsel når lading startes.",
+            ],
+        },
+        {
+            v: "1.2.0",
+            name: "Redigering",
+            items: [
+                "Rediger eksisterende registreringer med «Lagre endringer».",
+                "Registreringsnummer øverst og uthevet i redigering og fliser.",
+                "«Tøm»-knapp for å nullstille en plass.",
+            ],
+        },
+        {
+            v: "1.1.0",
+            name: "Historikk",
+            items: [
+                "Autofullfør for bil, regnr og navn basert på tidligere bruk.",
+                "Automatisk utfylling av bil og navn fra registreringsnummer.",
+            ],
+        },
+        {
+            v: "1.0.0",
+            name: "Første versjon",
+            items: [
+                "Seks ladeplasser med sanntidssynkronisering.",
+                "To ladeøkter med nedtelling og status.",
+            ],
+        },
+    ];
+
+    function setupChangelog() {
+        const btn = document.getElementById("appVersion");
+        const dialog = document.getElementById("changelogDialog");
+        const list = document.getElementById("changelogList");
+        const close = document.getElementById("changelogClose");
+        if (!btn || !dialog || !list) return;
+
+        CHANGELOG.forEach((entry, i) => {
+            const li = document.createElement("li");
+            li.className = "changelog-entry" + (i === 0 ? " current" : "");
+            const items = entry.items.map((t) => `<li>${escapeHtml(t)}</li>`).join("");
+            li.innerHTML =
+                `<div class="changelog-ver"><strong>v${entry.v}</strong>` +
+                `<span class="changelog-name">«${escapeHtml(entry.name)}»</span></div>` +
+                `<ul>${items}</ul>`;
+            list.appendChild(li);
+        });
+
+        btn.addEventListener("click", () => dialog.showModal());
+        close?.addEventListener("click", () => dialog.close());
+        // Lukk ved klikk på bakgrunnen.
+        dialog.addEventListener("click", (e) => {
+            if (e.target === dialog) dialog.close();
+        });
+    }
+
+    function escapeHtml(str) {
+        return String(str).replace(/[&<>"']/g, (c) =>
+            ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+        );
+    }
+
     // Bytter aktiv ladergruppe og oppdaterer visningen.
     function setGroup(key) {
         if (!key || currentGroup === key || !GROUPS.some((g) => g.key === key)) return;
@@ -1244,6 +1324,7 @@
     setupGroupSwitch();
     setupSwipeGroups();
     setupInfoAccordion();
+    setupChangelog();
     seedHistoryFrom(spots);
     renderHistoryOptions();
     renderSummary();

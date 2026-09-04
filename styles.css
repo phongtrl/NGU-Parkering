@@ -816,6 +816,138 @@ main {
     white-space: nowrap;
 }
 
+/* Liten «ladeplugg»-versjonspille */
+.version {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 3px 10px;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, transform 0.15s;
+}
+
+.version:hover {
+    border-color: var(--muted);
+    color: var(--text);
+    transform: translateY(-1px);
+}
+
+/* Versjonshistorikk-popup */
+.changelog {
+    border: none;
+    padding: 0;
+    margin: auto;
+    background: transparent;
+    max-width: 460px;
+    width: calc(100% - 32px);
+}
+
+.changelog::backdrop {
+    background: rgba(24, 24, 27, 0.45);
+}
+
+.changelog[open] {
+    animation: modalIn 0.2s ease;
+}
+
+.changelog-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 24px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 70px rgba(24, 24, 27, 0.3);
+}
+
+.changelog-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.changelog-title {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+}
+
+.changelog-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.changelog-entry {
+    position: relative;
+    padding-left: 18px;
+    border-left: 2px solid var(--line);
+    padding-bottom: 2px;
+}
+
+.changelog-entry::before {
+    content: "";
+    position: absolute;
+    left: -6px;
+    top: 4px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+}
+
+.changelog-entry.current::before {
+    background: var(--free);
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+}
+
+.changelog-ver {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.changelog-ver strong {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.changelog-name {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.changelog-entry ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.changelog-entry li {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+    padding-left: 14px;
+    position: relative;
+}
+
+.changelog-entry li::before {
+    content: "–";
+    position: absolute;
+    left: 0;
+    color: var(--faint);
+}
+
 /* Popup */
 .modal {
     border: none;
@@ -1107,7 +1239,16 @@ main {
     .spot-slot { font-size: 11px; }
     .spot-timer-time { font-size: 13.5px; }
 
-    .app-footer { display: none; }
+    /* Vis kun en slank versjonspille nederst på mobil. */
+    .app-footer {
+        display: flex;
+        justify-content: center;
+        flex: 0 0 auto;
+        margin: 8px 0 0;
+    }
+    .app-footer #lastSaved,
+    .app-footer .credit { display: none; }
+    .version { font-size: 10px; padding: 2px 8px; }
 }
 
 /* Bekreftelses-popup (toast) */
